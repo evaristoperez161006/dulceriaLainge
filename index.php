@@ -1,0 +1,375 @@
+<?php
+require_once 'config.php';
+// Si ya hay sesión activa, redirige al panel correspondiente
+if (!empty($_SESSION['usuario_id'])) {
+    header('Location: ' . ($_SESSION['rol'] === 'admin' ? 'admin/dashboard.php' : 'empleado/dashboard.php'));
+    exit;
+}
+$error = $_SESSION['login_error'] ?? '';
+unset($_SESSION['login_error']);
+?>
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SweetManager Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #ff69b4, #ff8ec9, #ffd54f, #ffb6c1);
+            background-size: 400% 400%;
+            animation: fondo 12s ease infinite;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        @keyframes fondo {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 450px;
+            background: rgba(255, 255, 255, .25);
+            backdrop-filter: blur(18px);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, .15);
+            animation: entrada .8s ease;
+            transition: .6s;
+        }
+
+        @keyframes entrada {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .cambio {
+            animation: cambioModo .6s ease;
+        }
+
+        @keyframes cambioModo {
+            0% {
+                opacity: 0;
+                transform: rotateY(90deg) scale(.8);
+            }
+
+            100% {
+                opacity: 1;
+                transform: rotateY(0deg) scale(1);
+            }
+        }
+
+        .logo {
+            font-size: 80px;
+            text-align: center;
+            animation: logoMove 3s infinite;
+        }
+
+        @keyframes logoMove {
+
+            0%,
+            100% {
+                transform: rotate(0deg);
+            }
+
+            50% {
+                transform: rotate(12deg);
+            }
+        }
+
+        .dulce {
+            position: absolute;
+            font-size: 55px;
+            opacity: .15;
+            animation: flotar 6s infinite ease-in-out;
+            pointer-events: none;
+        }
+
+        @keyframes flotar {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-25px);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dulce {
+                display: none;
+            }
+        }
+
+        h1 {
+            text-align: center;
+            color: #fff;
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .subtitulo {
+            text-align: center;
+            color: white;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        .selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .selector button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: .3s;
+        }
+
+        .admin-mode {
+            border: 3px solid #ff4fa2;
+        }
+
+        .employee-mode {
+            border: 3px solid #f59e0b;
+        }
+
+        .activo-admin {
+            background: #ff4fa2;
+            color: white;
+        }
+
+        .activo-emp {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .inactivo {
+            background: white;
+            color: #666;
+        }
+
+        .campo {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 15px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .captcha-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        .captcha {
+            flex: 1;
+            background: white;
+            padding: 12px;
+            border-radius: 15px;
+            text-align: center;
+            font-weight: 800;
+            color: #ff1493;
+            letter-spacing: 3px;
+        }
+
+        .refresh {
+            border: none;
+            padding: 12px 20px;
+            border-radius: 15px;
+            cursor: pointer;
+            background: #fff;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 15px;
+            margin-top: 10px;
+            background: #ff4fa2;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .3s;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .error-msg {
+            background: rgba(255, 0, 0, .25);
+            color: #fff;
+            padding: 10px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dulce" style="left:5%;top:10%;">🍭</div>
+    <div class="dulce" style="right:8%;top:20%;">🍬</div>
+
+    <div class="dulce" style="left:5%;top:120">🧁</div>
+    <div class="dulce" style="right:8%;top:80%;">🍪</div>
+
+    <div class="login-card admin-mode" id="card">
+        <div class="logo">🍭</div>
+        <h1>SweetManager Pro</h1>
+        <p class="subtitulo">Sistema de Inventario y Punto de Venta</p>
+
+        <?php if ($error): ?>
+            <div class="error-msg"><?php echo htmlspecialchars($error); ?></div>
+        <?php endif; ?>
+
+        <div class="selector">
+            <button type="button" id="btnAdmin" class="activo-admin">👑 Admin</button>
+            <button type="button" id="btnEmpleado" class="inactivo">🛒 Empleado</button>
+        </div>
+
+        <form id="formLogin" action="auth.php" method="post">
+            <input type="hidden" name="rol" id="rol" value="admin">
+
+            <div id="campoID" class="campo hidden">
+                <label>ID Empleado</label>
+                <input type="text" id="employeeId" name="employeeId" placeholder="ID485125">
+            </div>
+
+            <div class="campo">
+                <label>Usuario</label>
+                <input type="text" id="usuario" name="usuario" placeholder="Ingrese su usuario" required>
+            </div>
+
+            <div class="campo">
+                <label>Contraseña</label>
+                <input type="password" id="password" name="password" placeholder="••••••••" required>
+            </div>
+
+            <div class="campo">
+                <label>Captcha</label>
+                <div class="captcha-box">
+                    <div class="captcha" id="captchaText"></div>
+                    <button type="button" class="refresh" onclick="generarCaptcha()">🔄</button>
+                </div>
+            </div>
+
+            <input type="text" id="captchaInput" name="captchaInput" placeholder="Ingrese el código" required>
+
+            <button type="submit" class="btn-login">Iniciar Sesión</button>
+        </form>
+    </div>
+
+    <script>
+        const card = document.getElementById("card");
+        const btnAdmin = document.getElementById("btnAdmin");
+        const btnEmpleado = document.getElementById("btnEmpleado");
+        const campoID = document.getElementById("campoID");
+        const rol = document.getElementById("rol");
+        let captchaActual = "";
+
+        function animarCambio() {
+            card.classList.add("cambio");
+            setTimeout(() => card.classList.remove("cambio"), 600);
+        }
+
+        btnAdmin.onclick = () => {
+            campoID.classList.add("hidden");
+            card.className = "login-card admin-mode";
+            btnAdmin.className = "activo-admin";
+            btnEmpleado.className = "inactivo";
+            rol.value = "admin";
+            animarCambio();
+        };
+
+        btnEmpleado.onclick = () => {
+            campoID.classList.remove("hidden");
+            card.className = "login-card employee-mode";
+            btnEmpleado.className = "activo-emp";
+            btnAdmin.className = "inactivo";
+            rol.value = "empleado";
+            animarCambio();
+        };
+
+        function generarCaptcha() {
+            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789";
+            let str = "";
+            for (let i = 0; i < 6; i++) str += chars.charAt(Math.floor(Math.random() * chars.length));
+            captchaActual = str;
+            document.getElementById("captchaText").innerText = str;
+        }
+
+        document.getElementById("formLogin").addEventListener("submit", function (e) {
+            const captchaUsuario = document.getElementById("captchaInput").value.trim().toUpperCase();
+            if (captchaUsuario !== captchaActual) {
+                e.preventDefault();
+                alert("Captcha incorrecto");
+                generarCaptcha();
+                document.getElementById("captchaInput").value = "";
+            }
+        });
+
+        generarCaptcha();
+    </script>
+</body>
+
+</html>
